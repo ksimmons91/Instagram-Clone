@@ -1,8 +1,8 @@
-import { Text, View, Image, FlatList } from "react-native";
+import { FlatList } from "react-native";
 import posts from "~/assets/data/posts.json";
-import {Ionicons, Feather, AntDesign} from "@expo/vector-icons"
 import PostListItem from "~/src/components/PostListItem";
-import { height, width } from "~/src/components/PostListItem";
+import { width } from "~/src/components/PostListItem";
+import React from "react";
 
 export default function FeedScreen(){
     return(

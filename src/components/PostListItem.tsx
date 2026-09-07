@@ -1,3 +1,4 @@
+import React from "react";
 import { Text, View, Image, FlatList, useWindowDimensions } from "react-native";
 import posts from "~/assets/data/posts.json";
 import {Ionicons, Feather, AntDesign} from "@expo/vector-icons"
@@ -7,7 +8,7 @@ import { AdvancedImage } from '@cloudinary/react';
 import { cld } from "~/src/lib/cloudinary";
 
 export default function PostListItem({ post }) {
-    const { width, height } = useWindowDimensions();
+    const { width } = useWindowDimensions();
     
     const image = cld
         .image(post.image)
@@ -33,7 +34,7 @@ export default function PostListItem({ post }) {
             <AdvancedImage cldImg={image} className="w-full aspect-[4/3]" />
 
              {/* Icons */}
-            <View className="flex-row gap-3 p-3">
+            <View className="flex-row gap-2 p-3">
                 <AntDesign name="heart" size={20} />
                 <Ionicons name="chatbubble-outline" size={20} />
                 <Feather name="send" size={20} />

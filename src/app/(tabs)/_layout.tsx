@@ -5,6 +5,7 @@ import { useAuth } from "~/src/providers/AuthProvider";
 
 
 export default function TabsLayout(){
+
     const { isAuthenticated } = useAuth();
     if(!isAuthenticated){
         return <Redirect href="/(auth)"/>

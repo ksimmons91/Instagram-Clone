@@ -15,16 +15,17 @@ export const cld = new Cloudinary({
 
             const options = {
                     upload_preset: 'Default',
-                    tag: 'sample',
+                    tag: 'Default',
                     unsigned: true,
+                    file: file,
                 }
 
             return new Promise<UploadApiResponse>(async (resolve, reject) => {
                 // upload image to cloudinary
 
                 await upload(cld, {
-                    file, 
-                    options: options, 
+                    options: options,
+                    file: file, 
                     callback: (error, response) => {
                         if (error || !response){
                             reject(error);
