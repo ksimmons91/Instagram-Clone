@@ -35,8 +35,10 @@ export default function CreatePost(){
             quality: 1,
             });
 
+            console.log(result.assets[0].uri.slice(5, result.assets[0].uri.length));
+
             if(!result.canceled){
-                setImage(result.assets[0].uri);
+                setImage(result.assets[0].uri.slice(5, result.assets[0].uri.length));
             }
         }
 
@@ -45,7 +47,7 @@ export default function CreatePost(){
                 return;
             }
             const response = await uploadImage(image);
-            //save post in database`
+            //save post in database
             console.log("image id: ", response?.public_id)
 
             
@@ -70,7 +72,7 @@ export default function CreatePost(){
 
             {image ? (<Image 
             source={{ 
-                uri: image, 
+                uri: "blob:"+image, 
                 }}
                 className="w-52 aspect-[4/3] rounded-lg bg-slate-300"
             />) : (

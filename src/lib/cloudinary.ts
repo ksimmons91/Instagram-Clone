@@ -12,25 +12,23 @@ export const cld = new Cloudinary({
 });
 
         export const uploadImage = async (file: string) => {
-
             const options = {
                     upload_preset: 'Default',
                     tag: 'Default',
                     unsigned: true,
-                    file: file,
                 }
 
             return new Promise<UploadApiResponse>(async (resolve, reject) => {
                 // upload image to cloudinary
 
                 await upload(cld, {
+                    file,
                     options: options,
-                    file: file, 
                     callback: (error, response) => {
                         if (error || !response){
                             reject(error);
                             alert(error?.message || "An error occurred while uploading the image.");
-                        } else{
+                        }else{
                             resolve(response);
                         }
                     //.. handle response
