@@ -1,13 +1,86 @@
-import { Text, View, Image, TextInput } from "react-native";
+import { Text, View, Image, TextInput, Alert } from "react-native";
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from "react";
 import Button from "~/src/components/Button";
 import React from "react";
 import { supabase } from "~/src/lib/supabase";
+import { useAuth } from "~/src/providers/AuthProvider";
+import { useEffect } from "react";
+import CustomTextInput from "~/src/components/CustomTextInput";
+import { cld } from "~/src/lib/cloudinary";
+import { thumbnail } from "@cloudinary/url-gen/actions/resize";
+import { AdvancedImage } from "@cloudinary/react";
 
 export default function ProfileScreen(){
     const [image, setImage] = useState<string | null>(null);
+    const [remoteImage, setRemoteImage] = useState<string | null>(null);
     const [username, setUsername] = useState('');
+    const [bio, setBio] = useState('');
+    
+    const { user } = useAuth();
+
+    useEffect(() =>{
+        getProfile();
+    }, []);
+
+    const getProfile = async () => {
+        if(!user){
+            return;
+        }
+        const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user?.id)
+        .single();
+    if(error){
+        Alert.alert("Failed to fetch properly.")
+    }
+    setUsername(data.username);
+    setBio(data.bio);
+    setRemoteImage(data.avatar_url);
+    };
+
+    const updateProfile = async () => {
+        if(!user){
+            return;
+        }
+
+        const updatedProfile = {
+            id: user.id,
+            username,
+            bio,
+        }
+
+        if(image){
+            const blob = await fetch(image).then((response) => response.blob());
+
+            const formData = new FormData();
+            formData.append('file', blob, 'upload.jpg');
+            formData.append('upload_preset', 'Default');
+
+            const response = await fetch(
+                'https://api.cloudinary.com/v1_1/r7arrbrw/image/upload',
+                { method: 'POST', body: formData }    
+            );
+
+            const result = await response.json();
+
+            updatedProfile.avatar_url = result.public_id;
+
+            if(!response.ok){
+                throw new Error(result.error?.message || 'Upload failed');
+            }
+        }
+
+        const { data, error} = await supabase
+        .from('profiles')
+        .upsert(updatedProfile);
+
+        if(error){
+            Alert.alert('Failed to update profile');
+        }
+
+    }
 
     const pickImage = async () => {
         const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -27,33 +100,54 @@ export default function ProfileScreen(){
         if(!result.canceled){
             setImage(result.assets[0].uri);
         }
+    };
+
+    let remoteCldImage;
+    if(remoteImage){
+        remoteCldImage = cld.image(remoteImage);
+        remoteCldImage.resize(thumbnail().width(300).height(300));
     }
 
     return(
-        <View className="p-3 flex-1">
+        <View className="p-3 flex-1 bg-gray-100 dark:bg-gray-900">
             {/* Avatar image picker */}
              {image ? (
                 <Image 
                     source={{ 
-                        uri: image 
+                        uri: image
                         }}
                         className="w-52 aspect-square self-center rounded-full bg-slate-300"
-                />) : (
-                <View className="w-52 aspect-square rounded-full bg-slate-300" />
+                />) : remoteCldImage ? (
+                    <AdvancedImage 
+                    cldImg={remoteCldImage}
+                    className = "w-52 aspect-square self-center rounded-full bg-slate-300" 
+                    /> 
+                ) : (
+                <View className="w-52 aspect-square self-center rounded-full bg-slate-300" />
                 )}
                 <Text onPress={pickImage} className="text-blue-500 font-semibold m-5 self-center">Change</Text>
             {/* Form */}
-            <Text className="mb-2 text-gray-300 font-semibold">Username</Text>
-            <TextInput 
+            <View className="gap-5">
+                <CustomTextInput 
+                label="Username"
                 placeholder="Username" 
                 value={username} 
                 onChangeText={setUsername}
-                className='border border-gray-300 p-2 rounded-md' 
-            />
+                />
+
+                <CustomTextInput 
+                label="Bio"
+                placeholder="Bio" 
+                value={bio} 
+                onChangeText={setBio}
+                multiline
+                numberOfLines={3}
+                />
+            </View>
 
             {/* Button */}
             <View className="gap-2 mt-auto">
-                <Button title="Update profile"/>
+                <Button title="Update profile" onPress={updateProfile}/>
                 <Button title="Sign out" onPress={() => supabase.auth.signOut()}/>
             </View>
         </View>

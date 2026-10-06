@@ -16,7 +16,7 @@ export default function PostListItem({ post }) {
         .quality('auto')
         .resize(auto().gravity(autoGravity()).width(width).height(width));
 
-        const avatar = cld.image(post.user.avatar_url);
+        const avatar = cld.image(post.user.avatar_url || "Default_pfp");
         avatar.resize(auto().gravity(autoGravity()).width(48).height(48))
 
     return(
@@ -27,7 +27,9 @@ export default function PostListItem({ post }) {
                     cldImg={avatar}
                     className="w-12 aspect-square rounded-full"
                 />
-                <Text className="font-semibold text-2xl">{post.user.username}</Text>
+                <Text className="font-semibold text-2xl">
+                    {post.user.username || "New user"}
+                </Text>
             </View>
 
             {/* Content */}

@@ -7,20 +7,26 @@ import React from "react";
 import { supabase } from "~/src/lib/supabase";
 import { useAuth } from "~/src/providers/AuthProvider";
 import { router } from "expo-router";
+import { appStyles } from "~/src/lib/styles";
+import { useVideoPlayer, VideoView } from 'expo-video';
+import { Audio, ResizeMode, Video } from 'expo-av';
 
 export default function CreatePost(){
     const [caption, setCaption] = useState('');
-    const [image, setImage] = useState<string | null>(null);
+    const [media, setMedia] = useState<string | null>(null);
+    const [mediaType, setMediaType] = useState<'video' | 'image' | undefined>();
+
+    const styles = appStyles;
 
     const { session } = useAuth();
 
     useEffect(() => {
-        if(!image){
-            pickImage();
+        if(!media){
+            pickMedia();
         }
-    },[image]);
+    },[media]);
 
-        const pickImage = async () => {
+        const pickMedia = async () => {
             const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
             if (!permissionResult.granted) {
@@ -38,48 +44,89 @@ export default function CreatePost(){
             console.log(result.assets[0].uri.slice(5, result.assets[0].uri.length));
 
             if(!result.canceled){
-                setImage(result.assets[0].uri.slice(5, result.assets[0].uri.length));
+                setMedia(result.assets[0].uri);
+                setMediaType(result.assets[0].type);
+                // console.log(JSON.stringify(result.assets[0], null, 2));
             }
         }
 
         const createPost = async () => {
-            if (!image) {
+            if (!media) {
                 return;
             }
-            const response = await uploadImage(image);
-            //save post in database
-            console.log("image id: ", response?.public_id)
+    
+            const blob = await fetch(media).then((response) => response.blob());
 
+            const formData = new FormData();
+            formData.append('file', blob, 'upload.jpg');
+            formData.append('upload_preset', 'Default');
+            formData.append('resource_type', 'auto');
+
+            const response = await fetch(
+            `https://api.cloudinary.com/v1_1/r7arrbrw/${mediaType}/upload`,
+            { method: 'POST', body: formData }
+            );
+
+            const result = await response.json();
+            console.log("Cloudinary public ID: ", result?.public_id);
+
+            if (!response.ok) {
+            throw new Error(result.error?.message || 'Upload failed');
+            }
             
             const { data, error } = await supabase
             .from('posts')
             .insert([
                 { 
                 caption, 
-                image: response?.public_id, 
+                image: result?.public_id, 
                 user_id: session?.user.id,
                 },
             ])
             .select();
 
-            router.push('/(tabs)');
+            if (error) {
+                Alert.alert('Could not save post', error.message);
+                return;
+                }
+
+                router.push('/(tabs)');
+
+            // const response = await uploadImage(image);
+            // //save post in database
+            // console.log("image id: ", response?.public_id)
         }
 
     return(
         <View className="p-3 items-center flex-1"> 
 
             {/* Image picker */}
+            {!media ? (
+                <View className="w-52 aspect-[3/4] rounded-lg bg-slate-300"/>
+            ) : mediaType === 'image' ? (
+                <Image 
+                    source={{ 
+                    uri: media, 
+                    }}
+                    style={styles.image} 
+                    className="w-52 aspect-[4/3] rounded-lg bg-slate-300"
+                />
+            ) : (
+                <Video
+                    className="w-52 aspect-[4/3] rounded-lg bg-slate-300"
+                    style={{ width: '75%', aspectRatio: 1 }}
+                    source={{
+                        uri: media,
+                    }}
+                    useNativeControls
+                    resizeMode={ResizeMode.CONTAIN}
+                    isLooping
+                    shouldPlay
+                />
+            )
+        }
 
-            {image ? (<Image 
-            source={{ 
-                uri: "blob:"+image, 
-                }}
-                className="w-52 aspect-[4/3] rounded-lg bg-slate-300"
-            />) : (
-            <View className="w-52 aspect-[3/4] rounded-lg bg-slate-300"/>
-            )}
-
-            <Text onPress={pickImage} className="text-blue-500 font-semibold m-5">Change</Text>
+            <Text onPress={pickMedia} className="text-blue-500 font-semibold m-5">Change</Text>
 
             {/* Text input for caption */}
 
