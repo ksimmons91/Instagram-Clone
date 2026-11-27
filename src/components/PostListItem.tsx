@@ -9,6 +9,7 @@ import PostContent from "~/src/components/PostContent";
 import { useAuth } from "../providers/AuthProvider";
 import { supabase } from "../lib/supabase";
 import { Octicons } from "@expo/vector-icons";
+import { sendLikeNotification } from "../app/utils/notifications";
 
 export default function PostListItem({ post }) {
     const [isLiked, setIsLiked] = React.useState(false);    
@@ -55,6 +56,8 @@ export default function PostListItem({ post }) {
         .insert([{user_id: user?.id, post_id: post.id}])
         .select();
         
+        sendLikeNotification((data?.[0]));
+
         setLikeRecord(data?.[0]);
     }
 

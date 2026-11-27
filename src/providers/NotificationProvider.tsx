@@ -1,7 +1,10 @@
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
-import Platform from 'react-native/Libraries/Utilities/Platform';
+import Platform from 'react-native';
 import React from 'react';
+import { Alert } from 'react-native';
+import { useAuth } from './AuthProvider';
+import { supabase } from '../lib/supabase';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -14,12 +17,45 @@ Notifications.setNotificationHandler({
 
 export default function NotificationProvider({ children }){
     const [expoPushToken, setExpoPushToken] = React.useState('');
+    const [notification, setNotification] = React.useState<Notifications.Notification | undefined>(
+    undefined
+  );
+  const { user } = useAuth();
 
   React.useEffect(() => {
     registerForPushNotificationsAsync()
       .then(token => setExpoPushToken(token ?? ''))
       .catch((error: any) => setExpoPushToken(`${error}`));
+
+      const notificationListener = Notifications.addNotificationReceivedListener(notification => {
+        setNotification(notification);
+        Alert.alert(
+          notification.request.content.title || "Notification",
+          notification.request.content.subtitle || "Subtitle"
+        );
+        });
+
+    const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
+      console.log(response);
+      });
+    return () => {
+      notificationListener.remove();
+      responseListener.remove();
+    };
   }, []);
+
+ React.useEffect(() => {
+  saveUserPushToken();
+ }, [expoPushToken]);
+
+  const saveUserPushToken = async () => {
+    if(!user?.id || !expoPushToken){
+      return;
+    }
+    await supabase
+    .from('profiles')
+    .update({ id: user.id, push_token: expoPushToken })
+  }
 
     return children;
 }
