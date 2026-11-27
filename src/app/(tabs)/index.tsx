@@ -3,32 +3,40 @@ import posts from "~/assets/data/posts.json";
 import PostListItem from "~/src/components/PostListItem";
 import React from "react";
 import { supabase } from "~/src/lib/supabase";
+import { useAuth } from "~/src/providers/AuthProvider"
 
 export default function FeedScreen(){
     const [newPosts, setNewPosts] = React.useState([]);
+    const[loading, setLoading] = React.useState(false);
+    const { user } = useAuth();
 
     React.useEffect(() => {
         fetchPosts();
     }, []);
 
     const fetchPosts = async () => {
+        setLoading(true);
+
         let { data, error } = await supabase
         .from('posts')
-        .select('*, user:profiles(*)')
-        // .eq('user_id', user?.id) 
+        .select('*, user:profiles(*), my_likes:likes(*), likes(count)')
+        // .eq('id', 6) 
+        .eq('my_likes.user_id', user?.id)
         .order('created_at', {ascending: false});
         
         if (error) {
             alert('Something went wrong')
         }
-        setNewPosts(data);
+        console.log(JSON.stringify(data))
+        setNewPosts(data)
+        setLoading(false);
     }
 
     return(
 
         <FlatList
-            keyExtractor={(item) => String(item.id)}
-            data={[...posts, ...newPosts]}
+            keyExtractor={(item) => item.id+1 || posts[0].id}
+            data={[ ...newPosts]}
             renderItem={({ item }) => <PostListItem post={item}/>}
             contentContainerStyle={{ 
                 gap: 10, 
@@ -36,6 +44,7 @@ export default function FeedScreen(){
                 alignSelf: "center", 
                 width: "100%", 
             }}
+            style={{ gap: 10 }}
             showsVerticalScrollIndicator={false}
         />
 

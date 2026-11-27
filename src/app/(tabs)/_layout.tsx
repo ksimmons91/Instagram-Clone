@@ -2,6 +2,7 @@ import { Redirect, Tabs } from "expo-router";
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import React from "react";
 import { useAuth } from "~/src/providers/AuthProvider";
+import NotificationProvider from "~/src/providers/NotificationProvider";
 
 
 export default function TabsLayout(){
@@ -11,7 +12,9 @@ export default function TabsLayout(){
         return <Redirect href="/(auth)"/>
     }
 
-    return( 
+    return(
+    
+    <NotificationProvider>
     <Tabs screenOptions={{tabBarActiveTintColor: 'black', tabBarShowLabel: false}}>
         <Tabs.Screen name='index' 
         options={{
@@ -34,5 +37,6 @@ export default function TabsLayout(){
             }} 
         />
     </Tabs>
+    </NotificationProvider>
     )
 }

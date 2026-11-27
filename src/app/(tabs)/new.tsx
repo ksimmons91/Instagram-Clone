@@ -81,6 +81,7 @@ export default function CreatePost(){
                 caption, 
                 image: result?.public_id, 
                 user_id: session?.user.id,
+                media_type: mediaType,
                 },
             ])
             .select();

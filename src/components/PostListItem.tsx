@@ -1,23 +1,79 @@
-import React from "react";
-import { Text, View, Image, FlatList, useWindowDimensions } from "react-native";
-import posts from "~/assets/data/posts.json";
+import React, { useEffect } from "react";
+import { Text, View } from "react-native";
 import {Ionicons, Feather, AntDesign} from "@expo/vector-icons"
 import { auto } from '@cloudinary/url-gen/actions/resize';
 import { autoGravity } from '@cloudinary/url-gen/qualifiers/gravity';
 import { AdvancedImage } from '@cloudinary/react';
 import { cld } from "~/src/lib/cloudinary";
+import PostContent from "~/src/components/PostContent";
+import { useAuth } from "../providers/AuthProvider";
+import { supabase } from "../lib/supabase";
+import { Octicons } from "@expo/vector-icons";
 
 export default function PostListItem({ post }) {
-    const { width } = useWindowDimensions();
-    
-    const image = cld
-        .image(post.image)
-        .format('auto')
-        .quality('auto')
-        .resize(auto().gravity(autoGravity()).width(width).height(width));
+    const [isLiked, setIsLiked] = React.useState(false);    
+    const [likeRecord, setLikeRecord] = React.useState(null);
+    const { user } = useAuth();
 
-        const avatar = cld.image(post.user.avatar_url || "Default_pfp");
-        avatar.resize(auto().gravity(autoGravity()).width(48).height(48))
+    useEffect(() => {
+        if(post.my_likes?.length > 0){
+        setLikeRecord(post.my_likes[0])
+        setIsLiked(true)
+        }
+    }, [post.my_likes])
+
+    useEffect(() => {
+        if(isLiked){
+            saveLike();
+        } else {
+            deleteLike();
+        }
+    }, [isLiked])
+
+    const fetchLike = async () => {
+        const {data, error } = await supabase
+        .from('likes')
+        .select('*') // * = all columns
+        .eq('user_id', user?.id)
+        .eq('post_id', post.id)
+        .single();
+
+        console.log(error);
+
+        if(data && data?.length > 0){
+            setLikeRecord(data[0]);
+            setIsLiked(true);
+        }
+    }
+
+    const saveLike = async () => {
+        if(likeRecord){
+            return;
+        }
+        const { data, error } =await supabase
+        .from('likes')
+        .insert([{user_id: user?.id, post_id: post.id}])
+        .select();
+        
+        setLikeRecord(data?.[0]);
+    }
+
+    const deleteLike = async () => {
+        if(likeRecord){
+        const { error } =await supabase
+        .from('likes')
+        .delete()
+        .eq('id', likeRecord.id)
+
+            if(!error){
+                setLikeRecord(null);
+            }
+        }
+    }
+
+    const avatar = cld.image(post.user.avatar_url || "Default_pfp");
+    avatar.resize(auto().gravity(autoGravity()).width(48).height(48))
+
 
     return(
         <View className="bg-white">
@@ -33,11 +89,31 @@ export default function PostListItem({ post }) {
             </View>
 
             {/* Content */}
-            <AdvancedImage cldImg={image} className="w-full aspect-[4/3]" />
+             <PostContent post={post} />  
+
+            <View className="px-3 gap-1">
+                <Text className="font-semibold">{
+                (post.likes?.[0]?.count === 1? "1 like" : 
+                post.likes?.[0]?.count + " likes" || 0 + " likes")}</Text>
+                <Text className="font-semibold">{post.user.username || "New user"}{' '}</Text>
+                <Text className="font-semibold">{post.caption}</Text>
+            </View>
 
              {/* Icons */}
-            <View className="flex-row gap-2 p-3">
-                <AntDesign name="heart" size={20} />
+            <View className={`flex-row gap-2 p-3`}>
+                {isLiked ? 
+                <AntDesign 
+                    onPress={() => setIsLiked(!isLiked)} 
+                    name={isLiked ? 'heart' : 'hearto'} 
+                    size={20} 
+                    color={isLiked ? "crimson" : "black"}
+                /> :
+                <Octicons
+                onPress={() => setIsLiked(!isLiked)}  
+                name="heart" 
+                size={24} 
+                color="black" />
+                }
                 <Ionicons name="chatbubble-outline" size={20} />
                 <Feather name="send" size={20} />
                 <Feather name="bookmark" size={20} className="ml-auto" />
