@@ -3,7 +3,7 @@ import { Text, View } from "react-native";
 import {Ionicons, Feather, AntDesign} from "@expo/vector-icons"
 import { auto } from '@cloudinary/url-gen/actions/resize';
 import { autoGravity } from '@cloudinary/url-gen/qualifiers/gravity';
-import { AdvancedImage } from '@cloudinary/react';
+import { AdvancedImage } from 'cloudinary-react-native';
 import { cld } from "~/src/lib/cloudinary";
 import PostContent from "~/src/components/PostContent";
 import { useAuth } from "../providers/AuthProvider";

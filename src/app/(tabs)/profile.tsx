@@ -9,7 +9,7 @@ import { useEffect } from "react";
 import CustomTextInput from "~/src/components/CustomTextInput";
 import { cld } from "~/src/lib/cloudinary";
 import { thumbnail } from "@cloudinary/url-gen/actions/resize";
-import { AdvancedImage } from "@cloudinary/react";
+import { AdvancedImage } from "cloudinary-react-native";
 
 export default function ProfileScreen(){
     const [image, setImage] = useState<string | null>(null);

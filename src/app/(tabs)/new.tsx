@@ -2,14 +2,12 @@ import { View, Image, Text, TextInput, Alert } from "react-native";
 import { useState, useEffect } from "react";
 import * as ImagePicker from 'expo-image-picker';
 import Button from "~/src/components/Button";
-import { uploadImage } from "~/src/lib/cloudinary";
 import React from "react";
 import { supabase } from "~/src/lib/supabase";
 import { useAuth } from "~/src/providers/AuthProvider";
 import { router } from "expo-router";
 import { appStyles } from "~/src/lib/styles";
-import { useVideoPlayer, VideoView } from 'expo-video';
-import { Audio, ResizeMode, Video } from 'expo-av';
+import { VideoView } from 'expo-video';
 
 export default function CreatePost(){
     const [caption, setCaption] = useState('');
@@ -113,7 +111,7 @@ export default function CreatePost(){
                     className="w-52 aspect-[4/3] rounded-lg bg-slate-300"
                 />
             ) : (
-                <Video
+                <VideoView
                     className="w-52 aspect-[4/3] rounded-lg bg-slate-300"
                     style={{ width: '75%', aspectRatio: 1 }}
                     source={{
